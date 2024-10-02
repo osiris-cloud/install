@@ -19,7 +19,7 @@ The most common way to expose services is through an external load balancer whic
 
 Follow these steps to have a minimum viable cluster. 3 machines are installed with each of the roles mentioned above.
 
-Minimun Requirements
+## Minimun Requirements
 
 Controller: 2 CPU cores, 4GB RAM, 50GB Disk Space
 
