@@ -148,22 +148,30 @@ if [ "$ROLE" == "controller" ]; then
     sleep 20
 
     print_color "Initializing Container Runtime Interface" "cyan"
-    kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/stable-3.2/tools/packaging/kata-deploy/kata-rbac/base/kata-rbac.yaml
-    kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/stable-3.2/tools/packaging/kata-deploy/kata-deploy/base/kata-deploy.yaml
+    kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/stable-3.2/tools/packaging/kata-deploy/kata-rbac/base/kata-rbac.yaml > /dev/null
+    sleep 5
+    kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/stable-3.2/tools/packaging/kata-deploy/kata-deploy/base/kata-deploy.yaml > /dev/null
     kubectl -n kube-system wait --timeout=5m --for=condition=Ready -l name=kata-deploy pod > /dev/null
-    kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/main/tools/packaging/kata-deploy/runtimeclasses/kata-runtimeClasses.yaml
+    kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/main/tools/packaging/kata-deploy/runtimeclasses/kata-runtimeClasses.yaml > /dev/null
     print_color "\xE2\x9C\x94  CRI installed" "green"
 
-    kubectl apply -f <Ingess url>
+    print_color "Initializing Ingress Controller" "cyan"
+    kubectl apply -f https://raw.githubusercontent.com/osiris-cloud/install/refs/heads/main/ingress-controller.yaml > /dev/null
+    print_color "\xE2\x9C\x94  Ingress Controller installed" "green"
 
     WORKER_TOKEN=$(kubeadm token create --print-join-command | awk '{print $5}')
+    MY_IP=$(ip -o -4 addr show | grep -v ' lo ' | awk '{print $4}' | head -n 1 | cut -d/ -f1)
 
-    print_color "\xE2\x9C\x94  Controller is Ready" "green"
+    print_color "\xE2\x9C\x94  Osiris Controller node is ready" "green"
+    print_color "Run the following on worker nodes" "cyan"
+    print_color "curl -sSL https://raw.githubusercontent.com/osiris-cloud/install/refs/heads/main/install.sh | bash -s -- --role worker --token $WORKER_TOKEN --controller-ip $MY_IP" "magenta"
+    echo ""
 
-    print_color "Run the following command on worker nodes" "magenta"
+    print_color "Run this after you have bootstrapped your cluster to block subsequent worker node registrations" "yellow"
+    print_color " kubectl delete clusterrolebinding kubeadm:node-autoapprove-bootstrap" "yellow"
+
+elif [ "$ROLE" == "worker" ]; then
+
+    kubeadm join $CONTROLLER_IP:6443 --token $TOKEN --cri-socket unix:///var/run/crio/crio.sock --discovery-token-unsafe-skip-ca-verification > /dev/null
 
 fi
-
-
-
-
