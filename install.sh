@@ -6,10 +6,8 @@ print_color() {
         "red")     color_code="0;31" ;;
         "green")   color_code="0;32" ;;
         "yellow")  color_code="0;33" ;;
-        "blue")    color_code="0;34" ;;
         "magenta") color_code="0;35" ;;
         "cyan")    color_code="0;36" ;;
-        "white")   color_code="0;37" ;;
         *)         color_code="0" ;;
     esac
     echo -e "\e[${color_code}m${1}\e[0m"
