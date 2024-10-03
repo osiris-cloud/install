@@ -13,13 +13,17 @@ print_color() {
   echo -e "\e[${color_code}m${1}\e[0m"
 }
 
-# Function to print usage
 print_usage() {
   print_color "Usage:" "cyan"
   print_color "  * For controller: $0 --role controller" "cyan"
   print_color "  * For worker: $0 --role worker --token <token> --controller-ip <ip>" "cyan"
   exit 1
 }
+
+if [ "$EUID" -ne 0 ]; then
+    print_color "This script must be run as root. Stop" "red"
+    exit 1
+fi
 
 # Check if the minimum number of arguments is provided
 if [ "$#" -lt 2 ]; then
@@ -197,7 +201,6 @@ EOF
 
 ## Control Plane
 if [ "$ROLE" == "controller" ]; then
-
   install_cloud_dep
 
   curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
