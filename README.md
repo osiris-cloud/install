@@ -41,17 +41,17 @@ Update system first with  `sudo dnf -y update && sudo dnf -y upgrade`
 This will generate a token which you can use to join the cluster
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/osiris-cloud/install/refs/heads/main/install.sh | bash -s -- --role controller
+curl -sSL https://get.osiriscloud.io | bash -s -- --role controller
 ```
 
 ## Worker
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/osiris-cloud/install/refs/heads/main/install.sh | bash -s -- --role worker --controller-ip <ip> --token <token>
+curl -sSL https://get.osiriscloud.io | bash -s -- --role worker --controller-ip <ip> --token <token>
 ```
 
 ## Load Balancer
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/osiris-cloud/install/refs/heads/main/install.sh | bash -s -- --role lb --node-ip "ip-1,ip-2,ip-3"
+curl -sSL https://get.osiriscloud.io | bash -s -- --role lb --node-ip "ip-1,ip-2,ip-3"
 ```
