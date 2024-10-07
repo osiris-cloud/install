@@ -324,10 +324,13 @@ data:
   use-proxy-protocol: "true"
   real-ip-header: "proxy_protocol"
   real-ip-recursive: "true"
-  proxy-body-size: "1024g"
+  proxy-body-size: "0"
   proxy-send-timeout: "3600"
   proxy-read-timeout: "3600"
   custom-http-errors: "404,503"
+  proxy-buffer-size: "16k"
+  proxy-buffers-number: "4"
+  proxy-buffering: "on"
 kind: ConfigMap
 metadata:
   labels:

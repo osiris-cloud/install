@@ -67,6 +67,8 @@ fi
 prepare_cloud_machine() {
   systemctl daemon-reload > /dev/null
 
+  dnf install -y NetworkManager NetworkManager-tui > /dev/null
+
   # Disable systemd resolved
   systemctl stop systemd-resolved > /dev/null
   systemctl disable systemd-resolved > /dev/null
@@ -97,12 +99,12 @@ EOF
   # Firewall rule
   interfaces=($(ls /sys/class/net | grep -v lo))
   firewall-cmd --zone=internal --add-interface="${interfaces[0]}" --permanent > /dev/null
+  firewall-cmd --zone=internal --add-forward --permanent  > /dev/null
   firewall-cmd --zone=internal --add-rich-rule='rule family="ipv4" source address="0.0.0.0/0" accept' --permanent > /dev/null
   firewall-cmd --reload > /dev/null
 
   print_color "\xE2\x9C\x94  Configure firewall" "green"
 
-  dnf install -y NetworkManager NetworkManager-tui > /dev/null
 
   systemctl daemon-reload > /dev/null
 
@@ -111,9 +113,10 @@ EOF
   # For CRI
   dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo > /dev/null
   dnf install -y docker-ce docker-ce-cli docker-buildx-plugin docker-compose-plugin > /dev/null
+
   dnf install -y containernetworking-plugins container-selinux selinux-policy-base crio iproute-tc git > /dev/null
   dnf install -y kubernetes kubernetes-kubeadm kubernetes-client > /dev/null
-  systemctl enable --now kubelet docker crio > /dev/null
+  systemctl enable --now kubelet crio docker > /dev/null
   print_color "\xE2\x9C\x94  Install CRI dependencies" "green"
 
   # For CSI
@@ -209,7 +212,7 @@ if [ "$ROLE" == "controller" ]; then
   curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash > /dev/null
 
   print_color "Initializing Controller..." "cyan"
-  kubeadm init --cri-socket unix:///var/run/crio/crio.sock --pod-network-cidr=10.244.0.0/16 > /dev/null
+  kubeadm init --cri-socket unix:///var/run/crio/crio.sock --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors=all --advertise-address > /dev/null
   print_color "\xE2\x9C\x94  Initialize Kubernetes" "green"
 
   mkdir -p $HOME/.kube > /dev/null
@@ -218,7 +221,7 @@ if [ "$ROLE" == "controller" ]; then
   print_color "kubeconfig saved to ~/.kube/config" "cyan"
 
   print_color "Waiting for cluster to be ready..." "yellow"
-  sleep 20
+  sleep 60
 
   print_color "Initializing Container Networking Interface..." "cyan"
   CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/master/stable.txt)
@@ -228,19 +231,28 @@ if [ "$ROLE" == "controller" ]; then
   cilium install > /dev/null
   print_color "\xE2\x9C\x94  Install CNI" "green"
 
+  print_color "Waiting for cluster to be ready..." "yellow"
+  sleep 90
+
   print_color "Installing CNI plugins..." "cyan"
   kubectl apply -f https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/master/deployments/multus-daemonset-thick.yml > /dev/null
   print_color "\xE2\x9C\x94  Install CNI plugin" "green"
 
-  print_color "Waiting for cluster to be ready..." "yellow"
-  sleep 20
+  sleep 10
 
   print_color "Initializing Container Runtime Interface..." "cyan"
   kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/stable-3.2/tools/packaging/kata-deploy/kata-rbac/base/kata-rbac.yaml > /dev/null
   sleep 3
   kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/stable-3.2/tools/packaging/kata-deploy/kata-deploy/base/kata-deploy.yaml > /dev/null
-  sleep 30
-  kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/main/tools/packaging/kata-deploy/runtimeclasses/kata-runtimeClasses.yaml > /dev/null
+
+   cat << EOF | kubectl apply -f - > /dev/null
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: kata
+handler: kata
+EOF
+
   print_color "\xE2\x9C\x94  install CRI " "green"
 
   print_color "Initializing Ingress Controller..." "cyan"
