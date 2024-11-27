@@ -321,13 +321,10 @@ subjects:
 apiVersion: v1
 data:
   allow-snippet-annotations: "true"
-  use-proxy-protocol: "true"
-  real-ip-header: "proxy_protocol"
-  real-ip-recursive: "true"
   proxy-body-size: "0"
   proxy-send-timeout: "3600"
   proxy-read-timeout: "3600"
-  custom-http-errors: "404,503"
+  custom-http-errors: "403,404,503"
   proxy-buffer-size: "16k"
   proxy-buffers-number: "4"
   proxy-buffering: "on"
@@ -696,7 +693,7 @@ spec:
     spec:
       containers:
       - name: default-backend
-        image: osiriscloud/nginx-not-found:latest
+        image: osiriscloud/nginx-custom-backend:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
