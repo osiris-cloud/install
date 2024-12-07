@@ -696,7 +696,7 @@ spec:
     spec:
       containers:
       - name: default-backend
-        image: osiriscloud/nginx-not-found:latest
+        image: osiriscloud/nginx-custom-backend:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
